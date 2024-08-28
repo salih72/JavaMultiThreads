@@ -32,7 +32,7 @@ public class PostgreSqlDataSourceConfig {
             @Qualifier("postgresqlDataSource") DataSource postgresqlDataSource) {
         LocalContainerEntityManagerFactoryBean em = new LocalContainerEntityManagerFactoryBean();
         em.setDataSource(postgresqlDataSource);
-        em.setPackagesToScan("com.multiThreads.threadExample.entity");
+        em.setPackagesToScan("com.multiThreads.threadExample.entity.postgresql");
 
         HibernateJpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();
         em.setJpaVendorAdapter(vendorAdapter);

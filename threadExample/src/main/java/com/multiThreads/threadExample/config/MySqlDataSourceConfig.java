@@ -34,7 +34,7 @@ public class MySqlDataSourceConfig {
     public LocalContainerEntityManagerFactoryBean mysqlEntityManagerFactory(@Qualifier("mysqlDataSource") DataSource mysqlDataSource) {
         LocalContainerEntityManagerFactoryBean em = new LocalContainerEntityManagerFactoryBean();
         em.setDataSource(mysqlDataSource);
-        em.setPackagesToScan("com.multiThreads.threadExample.entity");
+        em.setPackagesToScan("com.multiThreads.threadExample.entity.mysql");
 
         HibernateJpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();
         em.setJpaVendorAdapter(vendorAdapter);

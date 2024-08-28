@@ -1,4 +1,4 @@
-package com.multiThreads.threadExample.entity;
+package com.multiThreads.threadExample.entity.mysql;
 
 import jakarta.persistence.*;
 import lombok.Data;
@@ -6,7 +6,7 @@ import lombok.Data;
 @Entity
 @Data
 @Table(name = "thread_string")
-public class PostgreSqlEntity {
+public class MySqlEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
