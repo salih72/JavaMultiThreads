@@ -1,0 +1,44 @@
+version: '3.8'
+services:
+  postgres:
+    image: postgres:latest
+    container_name: postgres_db
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: salihcesur123
+      POSTGRES_DB: mydatabase
+    ports:
+      - "5433:5432"  # Host port:Container port
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  mysql:
+    image: mysql:latest
+    container_name: mysql_db
+    environment:
+      MYSQL_ROOT_PASSWORD: salihcesur123
+      MYSQL_DATABASE: mydatabase
+      MYSQL_USER: user
+      MYSQL_PASSWORD: salihcesur123
+    ports:
+      - "3307:3306"  # Host port:Container port
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  mariadb:
+    image: mariadb:latest
+    container_name: mariadb_db
+    environment:
+      MYSQL_ROOT_PASSWORD: salihcesur123
+      MYSQL_DATABASE: mydatabase
+      MYSQL_USER: user
+      MYSQL_PASSWORD: salihcesur123
+    ports:
+      - "3308:3306"  # Host port:Container port
+    volumes:
+      - mariadb_data:/var/lib/mysql
+
+volumes:
+  postgres_data: {}
+  mysql_data: {}
+  mariadb_data: {}
