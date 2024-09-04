@@ -7,6 +7,7 @@ import com.javaMultiThreads.contextSave.repositories.mariadb.MariadbDataReposito
 import com.javaMultiThreads.contextSave.repositories.mysql.MysqlDataRepository;
 import com.javaMultiThreads.contextSave.repositories.postgres.PostgresDataRepository;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Service;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,10 +15,12 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
 
 @Service
+@EnableAsync
 public class DataService {
 
     private final PostgresDataRepository postgresRepo;
@@ -31,24 +34,27 @@ public class DataService {
     }
 
     @Async("threadPoolTaskExecutor")
-    public void saveToPostgres(String data) {
+    public CompletableFuture<Void> saveToPostgres(String data) {
         PostgresData postgresData = new PostgresData();
         postgresData.setContent(data);
         postgresRepo.save(postgresData);
+        return CompletableFuture.completedFuture(null);
     }
 
     @Async("threadPoolTaskExecutor")
-    public void saveToMysql(String data) {
+    public CompletableFuture<Void> saveToMysql(String data) {
         MysqlData mysqlData = new MysqlData();
         mysqlData.setContent(data);
         mysqlRepo.save(mysqlData);
+        return CompletableFuture.completedFuture(null);
     }
 
     @Async("threadPoolTaskExecutor")
-    public void saveToMariadb(String data) {
+    public CompletableFuture<Void> saveToMariadb(String data) {
         MariadbData mariadbData = new MariadbData();
         mariadbData.setContent(data);
         mariadbRepo.save(mariadbData);
+        return CompletableFuture.completedFuture(null);
     }
 
     public ResponseEntity<String> saveDataToDatabase(String dbType, int threadCount) {
@@ -57,7 +63,6 @@ public class DataService {
             byte[] fileData = Files.readAllBytes(filePath);
             int chunkSize = fileData.length / threadCount;
 
-            // DB'ye kayıt işlemini belirleyen fonksiyonu seçelim
             Consumer<String> saveFunction;
 
             switch (dbType) {
@@ -74,15 +79,14 @@ public class DataService {
                     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Unknown database type");
             }
 
-            // Veri bölümlerini işlemek ve kaydetmek için döngü
+            // Her iş parçacığını asenkron olarak çalıştır
             for (int i = 0; i < threadCount; i++) {
                 int start = i * chunkSize;
                 int end = (i == threadCount - 1) ? fileData.length : (i + 1) * chunkSize;
-                String dataChunk = new String(fileData, start, end - start);
+                final String dataChunk = "Thread #" + (i + 1) + ": " + new String(fileData, start, end - start);
 
-                // Her iş parçacığı için veri parçasını asenkron olarak kaydet
-                final String chunkToSave = dataChunk;  // Her iş parçacığına benzersiz veri parçası atanır
-                saveFunction.accept(chunkToSave);
+                // Her iş parçacığını asenkron olarak başlat
+                CompletableFuture.runAsync(() -> saveFunction.accept(dataChunk));
             }
 
             return ResponseEntity.ok("Data successfully added to " + dbType);

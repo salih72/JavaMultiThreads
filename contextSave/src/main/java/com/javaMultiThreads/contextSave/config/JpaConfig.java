@@ -23,7 +23,6 @@ public class JpaConfig {
             JpaVendorAdapter jpaVendorAdapter,
             ObjectProvider<PersistenceUnitManager> persistenceUnitManager) {
 
-        // Boş bir HashMap kullanarak Map parametresini null olmayacak şekilde düzenliyoruz.
         Map<String, Object> jpaProperties = new HashMap<>();
 
         return new EntityManagerFactoryBuilder(jpaVendorAdapter, jpaProperties, persistenceUnitManager.getIfAvailable());
