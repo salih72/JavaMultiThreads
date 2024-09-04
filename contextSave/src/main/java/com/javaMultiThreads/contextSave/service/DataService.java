@@ -10,11 +10,12 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.function.Consumer;
+
 
 @Service
 public class DataService {
@@ -56,24 +57,32 @@ public class DataService {
             byte[] fileData = Files.readAllBytes(filePath);
             int chunkSize = fileData.length / threadCount;
 
+            // DB'ye kayıt işlemini belirleyen fonksiyonu seçelim
+            Consumer<String> saveFunction;
+
+            switch (dbType) {
+                case "postgres":
+                    saveFunction = this::saveToPostgres;
+                    break;
+                case "mysql":
+                    saveFunction = this::saveToMysql;
+                    break;
+                case "mariadb":
+                    saveFunction = this::saveToMariadb;
+                    break;
+                default:
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Unknown database type");
+            }
+
+            // Veri bölümlerini işlemek ve kaydetmek için döngü
             for (int i = 0; i < threadCount; i++) {
                 int start = i * chunkSize;
                 int end = (i == threadCount - 1) ? fileData.length : (i + 1) * chunkSize;
                 String dataChunk = new String(fileData, start, end - start);
 
-                switch (dbType) {
-                    case "postgres":
-                        saveToPostgres(dataChunk);
-                        break;
-                    case "mysql":
-                        saveToMysql(dataChunk);
-                        break;
-                    case "mariadb":
-                        saveToMariadb(dataChunk);
-                        break;
-                    default:
-                        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Unknown database type");
-                }
+                // Her iş parçacığı için veri parçasını asenkron olarak kaydet
+                final String chunkToSave = dataChunk;  // Her iş parçacığına benzersiz veri parçası atanır
+                saveFunction.accept(chunkToSave);
             }
 
             return ResponseEntity.ok("Data successfully added to " + dbType);
