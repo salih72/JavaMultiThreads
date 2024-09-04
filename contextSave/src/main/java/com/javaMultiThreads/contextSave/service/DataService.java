@@ -18,7 +18,6 @@ import java.nio.file.Paths;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
-
 @Service
 @EnableAsync
 public class DataService {
@@ -59,7 +58,7 @@ public class DataService {
 
     public ResponseEntity<String> saveDataToDatabase(String dbType, int threadCount) {
         try {
-            Path filePath = Paths.get(System.getProperty("user.home"), "Desktop", "file.txt");
+            Path filePath = Paths.get(System.getProperty("user.home"), "Desktop", "big-file.txt");
             byte[] fileData = Files.readAllBytes(filePath);
             int chunkSize = fileData.length / threadCount;
 
@@ -79,13 +78,11 @@ public class DataService {
                     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Unknown database type");
             }
 
-            // Her iş parçacığını asenkron olarak çalıştır
             for (int i = 0; i < threadCount; i++) {
                 int start = i * chunkSize;
                 int end = (i == threadCount - 1) ? fileData.length : (i + 1) * chunkSize;
                 final String dataChunk = "Thread #" + (i + 1) + ": " + new String(fileData, start, end - start);
 
-                // Her iş parçacığını asenkron olarak başlat
                 CompletableFuture.runAsync(() -> saveFunction.accept(dataChunk));
             }
 
