@@ -14,12 +14,15 @@ public class AsyncConfig {
     @Bean(name = "threadPoolTaskExecutor")
     public Executor threadPoolTaskExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setCorePoolSize(10);
-        executor.setMaxPoolSize(100);
-        executor.setQueueCapacity(100);
+        executor.setCorePoolSize(10);  // Minimum thread sayısı
+        executor.setMaxPoolSize(50);  // Maksimum thread sayısı
+        executor.setQueueCapacity(100);  // Kuyruk kapasitesini sıfır yaptık (her iş hemen yeni thread alacak)
         executor.setThreadNamePrefix("Async-");
+        executor.setAllowCoreThreadTimeOut(true);  // Core thread'lerin iş bittikten sonra sonlanmasına izin ver
+        executor.setKeepAliveSeconds(30);  // Thread boşta 1 saniye kaldığında sonlansın
         executor.initialize();
         return executor;
     }
 }
+
 
