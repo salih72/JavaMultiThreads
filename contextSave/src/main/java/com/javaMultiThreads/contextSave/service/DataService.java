@@ -1,17 +1,14 @@
 package com.javaMultiThreads.contextSave.service;
 
-import com.javaMultiThreads.contextSave.entities.MariadbData;
-import com.javaMultiThreads.contextSave.entities.MysqlData;
-import com.javaMultiThreads.contextSave.entities.PostgresData;
+import com.javaMultiThreads.contextSave.factories.DatabaseSaverFactory;
+import com.javaMultiThreads.contextSave.interfaces.DatabaseSaver;
 import com.javaMultiThreads.contextSave.repositories.mariadb.MariadbDataRepository;
 import com.javaMultiThreads.contextSave.repositories.mysql.MysqlDataRepository;
 import com.javaMultiThreads.contextSave.repositories.postgres.PostgresDataRepository;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Service;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.charset.StandardCharsets;
@@ -21,7 +18,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Consumer;
 
 @Service
 @EnableAsync
@@ -37,47 +33,10 @@ public class DataService {
         this.mariadbRepo = mariadbRepo;
     }
 
-    @Async("threadPoolTaskExecutor")
-    public CompletableFuture<Void> saveToPostgres(String data) {
-        PostgresData postgresData = new PostgresData();
-        postgresData.setContent(data);
-        postgresRepo.save(postgresData);
-        return CompletableFuture.completedFuture(null);
-    }
-
-    @Async("threadPoolTaskExecutor")
-    public CompletableFuture<Void> saveToMysql(String data) {
-        MysqlData mysqlData = new MysqlData();
-        mysqlData.setContent(data);
-        mysqlRepo.save(mysqlData);
-        return CompletableFuture.completedFuture(null);
-    }
-
-    @Async("threadPoolTaskExecutor")
-    public CompletableFuture<Void> saveToMariadb(String data) {
-        MariadbData mariadbData = new MariadbData();
-        mariadbData.setContent(data);
-        mariadbRepo.save(mariadbData);
-        return CompletableFuture.completedFuture(null);
-    }
-
     public ResponseEntity<String> saveDataToDatabase(String dbType, int threadCount) {
         Path filePath = Paths.get(System.getProperty("user.home"), "Desktop", "big-file.txt");
 
-        Consumer<String> saveFunction;
-        switch (dbType) {
-            case "postgres":
-                saveFunction = this::saveToPostgres;
-                break;
-            case "mysql":
-                saveFunction = this::saveToMysql;
-                break;
-            case "mariadb":
-                saveFunction = this::saveToMariadb;
-                break;
-            default:
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Unknown database type");
-        }
+        DatabaseSaver saveFunction = DatabaseSaverFactory.createSaver(dbType, postgresRepo, mysqlRepo, mariadbRepo);
 
         try {
             long fileSize = Files.size(filePath);
@@ -87,13 +46,13 @@ public class DataService {
 
             for (int i = 0; i < threadCount; i++) {
                 long startByte = i * chunkSize;
-                long endByte = (i == threadCount - 1) ? fileSize : (i + 1) * chunkSize;  // Bitiş byte'ı
+                long endByte = (i == threadCount - 1) ? fileSize : (i + 1) * chunkSize;
                 int threadNumber = i + 1;
 
                 futures.add(CompletableFuture.runAsync(() -> {
                     try (RandomAccessFile raf = new RandomAccessFile(filePath.toFile(), "r")) {
                         raf.seek(startByte);
-                        byte[] buffer = new byte[4 * 1024 * 1024];
+                        byte[] buffer = new byte[(int) chunkSize];
                         long bytesToRead = endByte - startByte;
                         long bytesRead = 0;
 
@@ -104,7 +63,7 @@ public class DataService {
 
                             String dataChunk = new String(buffer, 0, read, StandardCharsets.UTF_8);
                             String dataWithThreadInfo = "Thread #" + threadNumber + ": " + dataChunk;
-                            saveFunction.accept(dataWithThreadInfo);
+                            saveFunction.save(dataWithThreadInfo).join();
 
                             bytesRead += read;
                         }
@@ -116,7 +75,7 @@ public class DataService {
             }
 
             CompletableFuture<Void> allFutures = CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
-            allFutures.join();  // Tüm thread'ler bitene kadar bekle
+            allFutures.join();
 
             return ResponseEntity.ok("Data successfully added to " + dbType);
 
@@ -124,6 +83,4 @@ public class DataService {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error reading file: " + e.getMessage());
         }
     }
-
-
 }
