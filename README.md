@@ -88,7 +88,9 @@ docker-compose.yml: Sets up PostgreSQL, MySQL, and MariaDB instances.
 <img width="584" alt="Screenshot 2024-10-02 at 10 42 19 AM" src="https://github.com/user-attachments/assets/7cd858c9-b5c9-45fe-8968-ad67e58da1e1">
 
 -----
-<img width="262" alt="Screenshot 2024-10-02 at 10 43 47 AM" src="https://github.com/user-attachments/assets/f509b9ff-92cf-44cc-bff2-28aca0c376da">
+<img width="416" alt="Screenshot 2024-10-02 at 10 47 42 AM" src="https://github.com/user-attachments/assets/5f3ef3a5-22e7-43aa-a887-85e48a2a4b2d">
 
 -----
-<img width="416" alt="Screenshot 2024-10-02 at 10 47 42 AM" src="https://github.com/user-attachments/assets/5f3ef3a5-22e7-43aa-a887-85e48a2a4b2d">
+<img width="262" alt="Screenshot 2024-10-02 at 10 43 47 AM" src="https://github.com/user-attachments/assets/f509b9ff-92cf-44cc-bff2-28aca0c376da">
+
+
